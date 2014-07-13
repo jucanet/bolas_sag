@@ -1,0 +1,39 @@
+<HTML>
+<HEAD>
+		<script type="text/javascript" src="prototype.js"></script>
+</HEAD>
+
+<BODY>
+
+<img name="g" id="g" src="graphs/aceleracion_4_6_20110619010940000000.png" width="512" height="384">	
+
+<input type="button" name="test" value="test" onclick="muestra_imagen()">
+
+</BODY>
+
+</HTML>
+
+<Script language="javascript">
+	function muestra_imagen(){
+		new Ajax.Request('ajax_obtener_grafico2.php', {
+		  method: 'post',
+		  //parameters: $('frmCallScript').serialize(true),
+		  onSuccess: function(transport) {
+			//alert(transport.responseText);
+			var archivo = transport.responseText;
+
+			if (archivo != ""){
+				$("g").src = "graficos/" + archivo;
+			}	
+			setTimeout("muestra_imagen()", 1000);
+			/*
+			datos = transport.responseJSON;
+			alert(datos.msg);
+			*/
+		 }
+		});
+	}
+	
+	setTimeout("muestra_imagen()", 1000);
+	
+</Script>

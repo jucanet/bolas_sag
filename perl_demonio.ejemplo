@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use constant LOG_DIR    => '/var/log/mydaemon';
+use constant LOG_FILE   => 'mydaemon.log';
+use constant PIDDIR     => LOG_DIR;
+
+use Proc::PID_File;
+use Proc::Daemon;
+use Log::Dispatch;
+use Log::Dispatch::File;
+use Date::Format;
+use File::Spec;
+
+sub dienice ($);
+
+#
+# fork and background process
+#
+our $ME = $0; $ME =~ s|.*/||;
+our $PIDFILE = PIDDIR."/$ME.pid";
+startDaemon();
+
+#
+# Setup a logging agent
+#
+our $HOSTNAME = `hostname`;
+chomp $HOSTNAME;
+my $log = new Log::Dispatch(
+      callbacks => sub { my %h=@_; return Date::Format::time2str('%B %e %T', time)." ".$HOSTNAME." $0\[$$]: ".$h{message}."\n"; }
+);
+$log->add( Log::Dispatch::File->new( name      => 'file1',
+                                     min_level => 'warning',
+                                     mode      => 'append',
+                                     filename  => File::Spec->catfile(LOG_DIR, LOG_FILE),
+                                   )
+);
+$log->warning("Starting Processing:  ".time());
+
+
+#
+# Setup signal handlers so that we have time to cleanup before shutting down
+#
+my $keep_going = 1;
+$SIG{HUP}  = sub { $log->warning("Caught SIGHUP:  exiting gracefully"); $keep_going = 0; };
+$SIG{INT}  = sub { $log->warning("Caught SIGINT:  exiting gracefully"); $keep_going = 0; };
+$SIG{QUIT} = sub { $log->warning("Caught SIGQUIT:  exiting gracefully"); $keep_going = 0; };
+#$SIG{TERM} = sub { $log->warning("Caught SIGTERM:  exiting gracefully"); $keep_going = 0; };
+
+
+#
+# enter main loop
+#
+while ($keep_going) {
+
+        # do something useful here
+
+
+}
+
+#
+# Mark a clean exit in the log
+#
+$log->warning("Stopping Processing:  ".time());
+
+
+#
+# startDaemon
+#
+# Fork and detach from the parent process
+#
+sub startDaemon {
+
+  #
+  # Fork and detach from the parent process
+  #
+#  eval { close DATA; }; # having __END__ will trigger __DATA__ to open and should be closed
+  eval { Proc::Daemon::Init; };
+  if ($@) {
+    dienice("Unable to start daemon:  $@");
+  }
+
+  #
+  # Get a PID file
+  #
+  dienice("Already running!") if hold_pid_file($PIDFILE);
+}
+
+#
+# dienice
+#
+# write die messages to the log before die'ing
+#
+sub dienice ($) {
+  my ($package, $filename, $line) = caller;
+  $log->critical("$_[0] at line $line in $filename");
+  die $_[0];
+}

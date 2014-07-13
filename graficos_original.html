@@ -1,0 +1,53 @@
+<HTML>
+<HEAD>
+		<script type="text/javascript" src="prototype.js"></script>
+</HEAD>
+
+<BODY>
+
+<table border=0>
+	<tr>
+		<Td><img name="ga" id="ga" src="graphs/1.png"  width="512" height="384"></td>
+		<Td><img name="gg" id="gg" src="graphs/1.png"  width="512" height="384"></td>
+	</tr>
+</table>
+
+
+
+</BODY>
+
+</HTML>
+
+<Script language="javascript">
+	function muestra_imagen_a(){
+		new Ajax.Request('ajax_obtener_grafico_original_acel.php', {
+		  method: 'post',
+		  onSuccess: function(transport) {
+			var archivo = transport.responseText;
+			if (archivo != ""){
+				$("ga").src = "graficos/" + archivo;
+			}	
+			setTimeout("muestra_imagen_a()", 1000);
+		 }
+		});
+	}
+
+	function muestra_imagen_g(){
+		new Ajax.Request('ajax_obtener_grafico_original_giro.php', {
+		  method: 'post',
+		  onSuccess: function(transport) {
+		var archivo = transport.responseText;
+			if (archivo != ""){
+				$("gg").src = "graficos/" + archivo;
+			}	
+			setTimeout("muestra_imagen_g()", 1000);
+		 }
+		});
+	}
+
+
+	setTimeout("muestra_imagen_a()", 1000);
+	setTimeout("muestra_imagen_g()", 1000);
+
+	
+</Script>

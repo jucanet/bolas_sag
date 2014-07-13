@@ -1,0 +1,66 @@
+#!/usr/bin/perl -w
+
+use Cache::Memcached;
+use POSIX qw(setsid);
+use DBI;
+use POSIX 'strftime';
+use JSON;
+
+&daemonize;
+
+my $memd = new Cache::Memcached {'servers' => [ "localhost:11211" ],};
+my $delimiter = ",";
+my $memKey = "DatosBolasSag";
+
+$dbh = DBI->connect('DBI:mysql:databasename=bolas_sag;host=127.0.0.1', 'root', 'root', { RaiseError => 1 } );
+
+while(1)
+{
+	my $datMem = $memd->get($memKey);
+	if($datMem){
+                $memd->delete($memKey);
+		$datMem = "{ 'data' : [$datMem] }";
+		$datMem =~ s/'/"/g;
+		$obj = jsonToObj($datMem);
+                my $fecha = strftime '%Y%m%d', localtime;
+                my $hora =  strftime '%H%M%S', localtime;
+
+		for my $item( @{$obj->{data}} ){
+			$sql = "INSERT INTO parametros_mem (idperno, timetick, elio, acelx, acely, acelz, girox, giroy, giroz, idbola, checksum, status,fecha,hora)";
+			$sql = $sql . " VALUES (";
+			$sql = $sql . "" . $item->{IdPerno};
+			$sql = $sql . "," . $item->{TimeTick};
+			$sql = $sql . "," . $item->{Elio};
+			$sql = $sql . "," . $item->{Acelx};
+			$sql = $sql . "," . $item->{Acely};
+			$sql = $sql . "," . $item->{Acelz};
+			$sql = $sql . "," . $item->{Girox};
+			$sql = $sql . "," . $item->{Giroy};
+			$sql = $sql . "," . $item->{Giroz};
+			$sql = $sql . "," . $item->{IdBola};
+			$sql = $sql . "," . $item->{CheckSum};
+			$sql = $sql . ",0";
+			$sql = $sql . ",'" . $fecha . "'";
+			$sql = $sql . ",'" . $hora . "');";
+
+			print $sql;			
+			$res = $dbh->prepare($sql) or die "Cannot prepare: " . $dbh->errstr();
+			$res->execute();
+		}	
+		$memd->delete($memKey);
+	}
+}
+$memd->disconnect_all();
+$dbh->disconnect();
+
+sub daemonize {
+    chdir '/'                 or die "Can't chdir to /: $!";
+    open STDIN, '/dev/null'   or die "Can't read /dev/null: $!";
+    open STDOUT, '>>/root/program/salida_mtd.txt' or die "Can't write to /dev/null: $!";
+    open STDERR, '>>/root/program/error_sql_perl.txt' or die "Can't write to /dev/null: $!";
+    defined(my $pid = fork)   or die "Can't fork: $!";
+    exit if $pid;
+    setsid                    or die "Can't start a new session: $!";
+    umask 0;
+}
+

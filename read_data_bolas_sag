@@ -1,0 +1,50 @@
+#!/usr/bin/perl -w
+
+use IO::Socket::INET;
+use Cache::Memcached;
+use POSIX qw(setsid);
+
+my $memd = new Cache::Memcached {'servers' => [ "localhost:11211" ],};
+my $delimiter = ",";
+my $memKey = "DatosBolasSag";
+
+# Create a new socket
+$MySocket=new IO::Socket::INET->new(LocalPort=>1234,Proto=>'udp');
+
+##$def_msg="\nReceiving message from client.....\n";
+
+&daemonize;
+
+while(1)
+{
+    #$MySocket->recv($text,180);
+    $MySocket->recv($text,512);
+    if($text ne ''){
+	my $datos_actual = $memd->get($memKey);
+	if ( $datos_actual ){
+		#$delimiter = ",";
+		$memd->append($memKey, "$delimiter$text");
+	}else{
+		$memd->set($memKey, "$text");
+	}
+	print "\nReceived message '", $text,"'\n";
+    }
+    # If client message is empty exit
+    #else
+    #{
+    #    print "Nada!";
+    #    #exit 1;
+    #}
+}
+$memd->disconnect_all();
+
+sub daemonize {
+    chdir '/'                 or die "Can't chdir to /: $!";
+    open STDIN, '/dev/null'   or die "Can't read /dev/null: $!";
+    open STDOUT, '>>/root/program/data_recibida.txt' or die "Can't write to /dev/null: $!";
+    open STDERR, '>>/dev/null' or die "Can't write to /dev/null: $!";
+    defined(my $pid = fork)   or die "Can't fork: $!";
+    exit if $pid;
+    setsid                    or die "Can't start a new session: $!";
+    umask 0;
+}

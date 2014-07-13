@@ -1,0 +1,87 @@
+<HTML>
+<HEAD>
+		<script type="text/javascript" src="prototype.js"></script>
+</HEAD>
+
+<BODY>
+
+<table border=0>
+	<tr>
+		<Td><img name="ga" id="ga" src="graphs/1.png"  width="512" height="384"></td>
+		<Td><img name="gp" id="gp" src="graphs/1.png"  width="512" height="384"></td>
+	</tr>
+	<tr>
+		<Td><img name="gfc" id="gfc" src="graphs/1.png"  width="512" height="384"></td>
+		<Td><img name="gfa" id="gfa" src="graphs/1.png"  width="512" height="384"></td>
+	</tr>
+</table>
+
+
+
+</BODY>
+
+</HTML>
+
+<Script language="javascript">
+	function muestra_imagen_a(){
+		new Ajax.Request('ajax_obtener_grafico.php', {
+		  method: 'post',
+		  //parameters: $('frmCallScript').serialize(true),
+		  onSuccess: function(transport) {
+			//alert(transport.responseText);
+			var archivo = transport.responseText;
+			if (archivo != ""){
+				$("ga").src = "graficos/" + archivo;
+			}	
+			setTimeout("muestra_imagen_a()", 1000);
+		 }
+		});
+	}
+
+	function muestra_imagen_p(){
+		new Ajax.Request('ajax_obtener_grafico2.php', {
+		  method: 'post',
+		  //parameters: $('frmCallScript').serialize(true),
+		  onSuccess: function(transport) {
+			//alert(transport.responseText);
+			var archivo = transport.responseText;
+			if (archivo != ""){
+				$("gp").src = "graficos/" + archivo;
+			}	
+			setTimeout("muestra_imagen_p()", 1000);
+		 }
+		});
+	}
+
+	function muestra_imagen_fc(){
+		new Ajax.Request('ajax_obtener_grafico_fc.php', {
+		  method: 'post',
+		  onSuccess: function(transport) {
+			var archivo = transport.responseText;
+			if (archivo != ""){
+				$("gfc").src = "graficos/" + archivo;
+			}	
+			setTimeout("muestra_imagen_fc()", 1000);
+		 }
+		});
+	}
+
+	function muestra_imagen_fa(){
+		new Ajax.Request('ajax_obtener_grafico_fa.php', {
+		  method: 'post',
+		  onSuccess: function(transport) {
+			var archivo = transport.responseText;
+			if (archivo != ""){
+				$("gfa").src = "graficos/" + archivo;
+			}	
+			setTimeout("muestra_imagen_fa()", 1000);
+		 }
+		});
+	}
+
+	setTimeout("muestra_imagen_p()", 1000);
+	setTimeout("muestra_imagen_a()", 1000);
+	setTimeout("muestra_imagen_fc()", 1000);
+	setTimeout("muestra_imagen_fa()", 1000);
+	
+</Script>
