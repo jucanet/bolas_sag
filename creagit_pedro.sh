@@ -1,3 +1,4 @@
+rm -rf .git/
 touch README.md
 git init
 git config --global user.name 'cuenta_software'
